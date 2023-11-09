@@ -1,7 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 
@@ -18,7 +18,7 @@ namespace Challenge1
             client.DefaultRequestHeaders.Add("Authorization", "team bd486984-077b-4c27-b203-b5d1e317da74");
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-            HttpResponseMessage response = await client.GetAsync("/api/challenges/find-the-jeep?isTest=true");
+            HttpResponseMessage response = await client.GetAsync("/api/challenges/find-the-jeep?isTest=false");
             if (!response.IsSuccessStatusCode)
             {
                 Console.WriteLine("Something went wrong");
@@ -29,7 +29,11 @@ namespace Challenge1
             dynamic You = respJson.you;
             dynamic Montain = respJson.mountain;
             dynamic Vulcan = respJson.volcano;
-            
+
+            Console.WriteLine(You);
+            Console.WriteLine(Montain);
+            Console.WriteLine(Vulcan);
+
             dynamic DistanceBJ = Montain;
             DistanceBJ.x -= You.x;
             DistanceBJ.y -= You.y;
@@ -38,11 +42,25 @@ namespace Challenge1
             Jeep.x += DistanceBJ.x;
             Jeep.y += DistanceBJ.y;
 
-            Dictionary<string, string> anwser = new Dictionary<string, string>();
-            anwser.Add("answer", JsonConvert.SerializeObject(Jeep));
+            Jeep.x = Math.Round((Jeep.x.Value), 2);
+            Jeep.y = Math.Round((Jeep.y.Value), 2);
 
-            Console.WriteLine(JsonConvert.SerializeObject(anwser));
+            dynamic answer = new
+            {
+                answer = new
+                {
+                    x = Math.Round((decimal)Jeep.x, 2),
+                    y = Math.Round((decimal)Jeep.y, 2)
+                }
+            };
 
+            Console.WriteLine(JsonConvert.SerializeObject((object) answer));
+
+
+            HttpResponseMessage postResponse = await client.PostAsJsonAsync<object>("/api/challenges/find-the-jeep", (object) answer);
+            
+            string response1 = await postResponse.Content.ReadAsStringAsync();
+            Console.WriteLine(postResponse.Headers.Location);
         }
     }
 }
