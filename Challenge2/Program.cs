@@ -45,8 +45,7 @@ namespace Challenge2
                 {'₼', 'U'}, {'₹', 'V'}, {'₩', 'W'}, {'₪', 'X'}, {'¥', 'Y'},
                 {'₷', 'Z'}
             };
-            return string.Join("",encryptedString.Select(symbol => decryptionMap.First(m => m.Key == symbol).Value)); 
-
+            return new string(encryptedString.Select(symbol => decryptionMap.TryGetValue(symbol, out var value) ? value : symbol).ToArray());
         }
         static string DecryptStringAES(string cipherText, string key, string iv)
         {
