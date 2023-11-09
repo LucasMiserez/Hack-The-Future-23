@@ -1,70 +1,37 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Net.Http.Json;
+﻿using System.Net.Http.Json;
 using System.Text;
-using System.Text.Json.Nodes;
-using System.Threading.Tasks;
 using Newtonsoft.Json;
 using System.Security.Cryptography;
+using HTFclassLibrary;
 
 namespace Challenge2
 {
     internal class Program
     {
-        static readonly HttpClient client = new();
+        private static readonly HttpClient httpClient = APIClient.Client;
 
         static async Task Main()
         {
-            client.BaseAddress = new Uri("https://exs-htf-2023.azurewebsites.net/");
-            client.DefaultRequestHeaders.Accept.Clear();
-            client.DefaultRequestHeaders.Add("Authorization", "team bd486984-077b-4c27-b203-b5d1e317da74");
-            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            PostAnswerAsync(DecryptStringAES((await PutAnswerAsync(Decrypt((await GetClient()).symbols))).encryption, "Pyramids of Giza", "Valley of Kings0"));
+        }
 
-            HttpResponseMessage response = await client.GetAsync("/api/challenges/ruins?isTest=false");
-            if (!response.IsSuccessStatusCode)
-            {
-                Console.WriteLine("Something went wrong");
-                return;
-            }
-            dynamic respJson = JsonConvert.DeserializeObject(await response.Content.ReadAsStringAsync());
-            Console.WriteLine(respJson);
+        static async Task<Exsertus?> GetClient()
+        {
+            HttpResponseMessage response = await httpClient.GetAsync("/api/challenges/ruins?isTest=false");
+            return JsonConvert.DeserializeObject<Exsertus>(await response.Content.ReadAsStringAsync());
+        }
 
-            string encryptedString = respJson.symbols;
-            string decryptedString = Decrypt(encryptedString);
+        static async Task<Exsertus?> PutAnswerAsync(string answerString)
+        {
+            HttpResponseMessage putRequest = await httpClient.PutAsJsonAsync<object>("/api/challenges/ruins", new { answer = answerString });
+            putRequest.EnsureSuccessStatusCode();
+            return JsonConvert.DeserializeObject<Exsertus>(await putRequest.Content.ReadAsStringAsync());
+        }
 
-            Console.WriteLine("Encrypted String: " + encryptedString);
-            Console.WriteLine("Decrypted String: " + decryptedString);
-            dynamic answer1 = new
-            {
-                answer = decryptedString
-            };
-
-            HttpResponseMessage putResponse = await client.PutAsJsonAsync<object>("/api/challenges/ruins", (object)answer1);
-            putResponse.EnsureSuccessStatusCode();
-            string response1 = await putResponse.Content.ReadAsStringAsync();
-
-            dynamic respJson_D2 = JsonConvert.DeserializeObject(await putResponse.Content.ReadAsStringAsync());
-            Console.WriteLine(respJson_D2);
-
-            string encryptedText = respJson_D2.encryption;
-
-            string key = "Pyramids of Giza";
-            string iv = "Valley of Kings0";
-
-            string decryptedText = DecryptStringAES(encryptedText, key, iv);
-
-            Console.WriteLine("Ontcijferd tekst: " + decryptedText);
-            dynamic answer2 = new
-            {
-                answer = decryptedText
-            };
-            HttpResponseMessage postResponse = await client.PostAsJsonAsync<object>("/api/challenges/ruins", (object)answer2);
-            postResponse.EnsureSuccessStatusCode();
-            string response2 = await postResponse.Content.ReadAsStringAsync();
-            Console.WriteLine("output:" + response2);
-
+        static async Task PostAnswerAsync(string answerString)
+        {
+            HttpResponseMessage postRequest = await httpClient.PutAsJsonAsync<object>("/api/challenges/ruins", new { answer = answerString });
+            postRequest.EnsureSuccessStatusCode();
         }
 
         static string Decrypt(string encryptedString)
@@ -97,20 +64,23 @@ namespace Challenge2
         }
         static string DecryptStringAES(string cipherText, string key, string iv)
         {
-            using (Aes aesAlg = Aes.Create())
-            {
-                aesAlg.Key = Encoding.UTF8.GetBytes(key);
-                aesAlg.IV = Encoding.UTF8.GetBytes(iv);
+            using Aes aesAlg = Aes.Create();
+            aesAlg.Key = Encoding.UTF8.GetBytes(key);
+            aesAlg.IV = Encoding.UTF8.GetBytes(iv);
 
-                ICryptoTransform decryptor = aesAlg.CreateDecryptor(aesAlg.Key, aesAlg.IV);
+            ICryptoTransform decryptor = aesAlg.CreateDecryptor(aesAlg.Key, aesAlg.IV);
 
-                using (var msDecrypt = new MemoryStream(Convert.FromBase64String(cipherText)))
-                using (var csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Read))
-                using (var srDecrypt = new StreamReader(csDecrypt))
-                {
-                    return srDecrypt.ReadToEnd();
-                }
-            }
+            using var msDecrypt = new MemoryStream(Convert.FromBase64String(cipherText));
+            using var csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Read);
+            using var srDecrypt = new StreamReader(csDecrypt);
+            return srDecrypt.ReadToEnd();
+        }
+        private class Exsertus
+        {
+            public string? symbols {get; set;}
+
+            public string? encryption {get; set;}
         }
     }
+
 }
