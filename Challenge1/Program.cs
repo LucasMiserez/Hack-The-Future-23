@@ -16,7 +16,7 @@ namespace Challenge1
                 y = Math.Round(respJson.volcano.y + (respJson.mountain.y -= respJson.you.y), 2)
             };
 
-            await PostAnswerAsync(respJson);
+            await PostAnswerAsync(respJson.jeep);
         }
         static async Task<Parallellogram?> GetClient()
         {
@@ -25,9 +25,9 @@ namespace Challenge1
             return JsonConvert.DeserializeObject<Parallellogram>(await response.Content.ReadAsStringAsync());
         }
 
-        static async Task PostAnswerAsync(Parallellogram parallellogram)
+        static async Task PostAnswerAsync(Parallellogram.Coordinaten jeep)
         {
-            HttpResponseMessage postResponse = await httpClient.PostAsJsonAsync<object>("/api/challenges/find-the-jeep", new { answer = parallellogram.jeep });
+            HttpResponseMessage postResponse = await httpClient.PostAsJsonAsync<object>("/api/challenges/find-the-jeep", new { answer = jeep });
             postResponse.EnsureSuccessStatusCode();
         }
 
