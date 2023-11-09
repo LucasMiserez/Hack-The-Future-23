@@ -14,23 +14,23 @@ namespace Challenge1
         static async Task Main()
         {
 
-            Input respJson = await GetClient();
+            Parallellogram respJson = await GetClient();
 
-
-            Answer Jeep = new()
+            respJson.jeep = new()
             {
                 x = Math.Round(respJson.volcano.x + (respJson.mountain.x -= respJson.you.x), 2),
                 y = Math.Round(respJson.volcano.y + (respJson.mountain.y -= respJson.you.y), 2)
             };
 
-            if (!string.IsNullOrEmpty(await PostAnswerAsync(Jeep))) {
+            if (!string.IsNullOrEmpty(await PostAnswerAsync(respJson)))
+            {
                 Console.WriteLine("Answser is wrong");
                 return;
             }
             Console.WriteLine("Correct answer");
         }
 
-        static async Task<Input?> GetClient()
+        static async Task<Parallellogram?> GetClient()
         {
             client.BaseAddress = new Uri("https://exs-htf-2023.azurewebsites.net/");
             client.DefaultRequestHeaders.Accept.Clear();
@@ -43,51 +43,28 @@ namespace Challenge1
                 Console.WriteLine("Something went wrong");
                 Environment.Exit(0);
             }
-            return JsonConvert.DeserializeObject<Input>(await response.Content.ReadAsStringAsync());
+            return JsonConvert.DeserializeObject<Parallellogram>(await response.Content.ReadAsStringAsync());
         }
 
-        static async Task<string?> PostAnswerAsync(object Answer)
+        static async Task<string?> PostAnswerAsync(Parallellogram parallellogram)
         {
-            HttpResponseMessage postResponse = await client.PostAsJsonAsync<object>("/api/challenges/find-the-jeep", new { answer = Answer});
+            HttpResponseMessage postResponse = await client.PostAsJsonAsync<object>("/api/challenges/find-the-jeep", new { answer = parallellogram.jeep });
             return await postResponse.Content.ReadAsStringAsync();
         }
-
-        class Answer
+        
+        public class Parallellogram
         {
-            public double x { get; set; }
+            public Coordinaten you { get; set; }
+            public Coordinaten volcano { get; set; }
+            public Coordinaten mountain { get; set; }
+            public Coordinaten jeep { get; set; }
 
-            public double y { get; set; }
-
-            public override string ToString()
+            public class Coordinaten
             {
-                return $"{{ x: {x}, y: {y} }}";
+                public double x { get; set; }
+                public double y { get; set; }
             }
-
         }
 
-        public class Mountain
-        {
-            public double x { get; set; }
-            public double y { get; set; }
-        }
-
-        public class Input
-        {
-            public You you { get; set; }
-            public Volcano volcano { get; set; }
-            public Mountain mountain { get; set; }
-        }
-
-        public class Volcano
-        {
-            public double x { get; set; }
-            public double y { get; set; }
-        }
-
-        public class You
-        {
-            public double x { get; set; }
-            public double y { get; set; }
-        }
     }
 }
