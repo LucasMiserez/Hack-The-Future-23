@@ -17,7 +17,7 @@ namespace Challenge2
 
         static async Task<Exsertus?> GetClient()
         {
-            HttpResponseMessage response = await httpClient.GetAsync("/api/challenges/ruins?isTest=false");
+            HttpResponseMessage response = await httpClient.GetAsync("/api/challenges/ruins?isTest=true");
             return JsonConvert.DeserializeObject<Exsertus>(await response.Content.ReadAsStringAsync());
         }
 
@@ -36,31 +36,17 @@ namespace Challenge2
 
         static string Decrypt(string encryptedString)
         {
-            Dictionary<string, char> decryptionMap = new Dictionary<string, char>
+            Dictionary<char, char> decryptionMap = new Dictionary<char, char>
             {
-                {"₳", 'A'}, {"฿", 'B'}, {"₵", 'C'}, {"₫", 'D'}, {"€", 'E'},
-                {"₣", 'F'}, {"₲", 'G'}, {"₶", 'H'}, {"₻", 'I'}, {"৳", 'J'},
-                {"₭", 'K'}, {"£", 'L'}, {"ℳ", 'M'}, {"₦", 'N'}, {"¤", 'O'},
-                {"₱", 'P'}, {"֏", 'Q'}, {"₨", 'R'}, {"$", 'S'}, {"₸", 'T'},
-                {"₼", 'U'}, {"₹", 'V'}, {"₩", 'W'}, {"₪", 'X'}, {"¥", 'Y'},
-                {"₷", 'Z'}
+                {'₳', 'A'}, {'฿', 'B'}, {'₵', 'C'}, {'₫', 'D'}, {'€', 'E'},
+                {'₣', 'F'}, {'₲', 'G'}, {'₶', 'H'}, {'₻', 'I'}, {'৳', 'J'},
+                {'₭', 'K'}, {'£', 'L'}, {'ℳ', 'M'}, {'₦', 'N'}, {'¤', 'O'},
+                {'₱', 'P'}, {'֏', 'Q'}, {'₨', 'R'}, {'$', 'S'}, {'₸', 'T'},
+                {'₼', 'U'}, {'₹', 'V'}, {'₩', 'W'}, {'₪', 'X'}, {'¥', 'Y'},
+                {'₷', 'Z'}
             };
+            return string.Join("",encryptedString.Select(symbol => decryptionMap.First(m => m.Key == symbol).Value)); 
 
-            string output = "";
-
-            foreach (var symbol in encryptedString)
-            {
-                foreach (var mapping in decryptionMap)
-                {
-                    if (mapping.Key[0] == symbol)
-                    {
-                        output += mapping.Value;
-                        break;
-                    }
-                }
-            }
-
-            return output;
         }
         static string DecryptStringAES(string cipherText, string key, string iv)
         {
@@ -77,9 +63,9 @@ namespace Challenge2
         }
         private class Exsertus
         {
-            public string? symbols {get; set;}
+            public string? symbols { get; set; }
 
-            public string? encryption {get; set;}
+            public string? encryption { get; set; }
         }
     }
 
