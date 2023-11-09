@@ -13,6 +13,25 @@ namespace Challenge1
 
         static async Task Main()
         {
+
+            Input respJson = await GetClient();
+
+
+            Answer Jeep = new()
+            {
+                x = Math.Round(respJson.volcano.x + (respJson.mountain.x -= respJson.you.x), 2),
+                y = Math.Round(respJson.volcano.y + (respJson.mountain.y -= respJson.you.y), 2)
+            };
+
+            if (!string.IsNullOrEmpty(await PostAnswerAsync(Jeep))) {
+                Console.WriteLine("Answser is wrong");
+                return;
+            }
+            Console.WriteLine("Correct answer");
+        }
+
+        static async Task<Input?> GetClient()
+        {
             client.BaseAddress = new Uri("https://exs-htf-2023.azurewebsites.net/");
             client.DefaultRequestHeaders.Accept.Clear();
             client.DefaultRequestHeaders.Add("Authorization", "team bd486984-077b-4c27-b203-b5d1e317da74");
@@ -22,45 +41,53 @@ namespace Challenge1
             if (!response.IsSuccessStatusCode)
             {
                 Console.WriteLine("Something went wrong");
-                return;
+                Environment.Exit(0);
             }
-            dynamic respJson = JsonConvert.DeserializeObject(await response.Content.ReadAsStringAsync());
+            return JsonConvert.DeserializeObject<Input>(await response.Content.ReadAsStringAsync());
+        }
 
-            dynamic You = respJson.you;
-            dynamic Montain = respJson.mountain;
-            dynamic Vulcan = respJson.volcano;
+        static async Task<string?> PostAnswerAsync(object Answer)
+        {
+            HttpResponseMessage postResponse = await client.PostAsJsonAsync<object>("/api/challenges/find-the-jeep", new { answer = Answer});
+            return await postResponse.Content.ReadAsStringAsync();
+        }
 
-            Console.WriteLine(You);
-            Console.WriteLine(Montain);
-            Console.WriteLine(Vulcan);
+        class Answer
+        {
+            public double x { get; set; }
 
-            dynamic DistanceBJ = Montain;
-            DistanceBJ.x -= You.x;
-            DistanceBJ.y -= You.y;
+            public double y { get; set; }
 
-            dynamic Jeep = Vulcan;
-            Jeep.x += DistanceBJ.x;
-            Jeep.y += DistanceBJ.y;
-
-            Jeep.x = Math.Round((Jeep.x.Value), 2);
-            Jeep.y = Math.Round((Jeep.y.Value), 2);
-
-            dynamic answer = new
+            public override string ToString()
             {
-                answer = new
-                {
-                    x = Math.Round((decimal)Jeep.x, 2),
-                    y = Math.Round((decimal)Jeep.y, 2)
-                }
-            };
+                return $"{{ x: {x}, y: {y} }}";
+            }
 
-            Console.WriteLine(JsonConvert.SerializeObject((object) answer));
+        }
 
+        public class Mountain
+        {
+            public double x { get; set; }
+            public double y { get; set; }
+        }
 
-            HttpResponseMessage postResponse = await client.PostAsJsonAsync<object>("/api/challenges/find-the-jeep", (object) answer);
-            
-            string response1 = await postResponse.Content.ReadAsStringAsync();
-            Console.WriteLine(postResponse.Headers.Location);
+        public class Input
+        {
+            public You you { get; set; }
+            public Volcano volcano { get; set; }
+            public Mountain mountain { get; set; }
+        }
+
+        public class Volcano
+        {
+            public double x { get; set; }
+            public double y { get; set; }
+        }
+
+        public class You
+        {
+            public double x { get; set; }
+            public double y { get; set; }
         }
     }
 }
