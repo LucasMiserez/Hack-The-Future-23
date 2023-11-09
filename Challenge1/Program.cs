@@ -3,6 +3,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 namespace Challenge1
 {
@@ -23,7 +24,25 @@ namespace Challenge1
                 Console.WriteLine("Something went wrong");
                 return;
             }
-            Console.WriteLine(await response.Content.ReadAsStringAsync());
+            dynamic respJson = JsonConvert.DeserializeObject(await response.Content.ReadAsStringAsync());
+
+            dynamic You = respJson.you;
+            dynamic Montain = respJson.mountain;
+            dynamic Vulcan = respJson.volcano;
+            
+            dynamic DistanceBJ = Montain;
+            DistanceBJ.x -= You.x;
+            DistanceBJ.y -= You.y;
+
+            dynamic Jeep = Vulcan;
+            Jeep.x += DistanceBJ.x;
+            Jeep.y += DistanceBJ.y;
+
+            Dictionary<string, string> anwser = new Dictionary<string, string>();
+            anwser.Add("answer", JsonConvert.SerializeObject(Jeep));
+
+            Console.WriteLine(JsonConvert.SerializeObject(anwser));
+
         }
     }
 }
