@@ -1,5 +1,5 @@
-# htf2023
-Repo for the Hack The Future Event of 2023
+# Hack The Future 2023
+Repo for the Hack The Future Event of 2023 (C# coding challenge)
 
 ## Key
 https://exs-htf-2023.azurewebsites.net/
